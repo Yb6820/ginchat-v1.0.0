@@ -43,7 +43,8 @@ func Router() *gin.Engine {
 	//添加好友
 	r.POST("/contact/addfriend", service.AddFriend)
 	//创建群
-	r.POST("/contact/createcommunity", service.CreateCommunity)
-
+	r.POST("/contact/createCommunity", service.CreateCommunity)
+	//群列表
+	r.POST("/contact/loadcommunity", service.LoadCommunity)
 	return r
 }

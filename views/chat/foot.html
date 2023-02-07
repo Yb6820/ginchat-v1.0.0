@@ -25,6 +25,13 @@
             },
             webSocket: {},
             win: "main",
+            com: {
+                "ownerId": "",
+                "icon": "",
+                "cate": "",
+                "name": "",
+                "memo": ""
+            },
             txtmsg: "",
             panelstat: "kbord",
             txtstat: "kbord",
@@ -357,9 +364,9 @@
             loadcommunitys: function() {
                 var that = this;
                 post("contact/loadcommunity", {
-                    userId: userId()
+                    ownerId: userId()
                 }, function(res) {
-                    that.communitys = res.rows || [];
+                    that.communitys = res.Rows || [];
                 })
             },
             addfriend: function() {
@@ -393,6 +400,35 @@
                     }
                 })
             },
+
+            //新建群显示
+            createCom: function() {
+                this.win = "community"
+                    //console.log("createCom")
+            },
+
+            //新建群提交
+            createcommunity() {
+                //console.log("createcommunity")
+                this.com.ownerId = userId()
+                console.log(this.com)
+                util.post("/contact/createCommunity", this.com).then(res => {
+                    console.log(res)
+                    if (res.Code != 0) {
+                        mui.toast(res.Msg)
+                    } else {
+                        mui.toast("建群成功,即将跳转")
+                        goBack()
+                    }
+                })
+            },
+
+            //回到聊天首页
+            goBack() {
+                this.win = "main"
+            },
+
+
             _joincomunity: function(dstobj) {
                 var that = this;
                 post("contact/joincommunity", {
