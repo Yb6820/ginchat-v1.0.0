@@ -24,7 +24,7 @@ func main() {
 	//db.AutoMigrate(&models.Contact{})
 
 	//生成group_basic表
-	db.AutoMigrate(&models.GroupBasic{})
+	db.AutoMigrate(&models.Community{})
 
 	/* // Create
 	user := &models.UserBasic{}

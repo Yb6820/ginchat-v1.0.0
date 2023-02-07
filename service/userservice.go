@@ -231,3 +231,33 @@ func SearchFriends(c *gin.Context) {
 	}) */
 	utils.RespOKList(c.Writer, users, len(users))
 }
+
+func AddFriend(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.Request.FormValue("userId"))
+	targetId, _ := strconv.Atoi(c.Request.FormValue("targetId"))
+	code, msg := models.AddFriend(uint(userId), uint(targetId))
+	/* c.JSON(200, gin.H{
+		"code":    0,
+		"message": "查询好友列表成功",
+		"data":    users,
+	}) */
+	if code == 0 {
+		utils.RespOk(c.Writer, code, msg)
+	} else {
+		utils.RespFail(c.Writer, msg)
+	}
+}
+
+func CreateCommunity(c *gin.Context) {
+	ownerId, _ := strconv.Atoi(c.Request.FormValue("ownerId"))
+	name := c.Request.FormValue("name")
+	community := models.Community{}
+	community.OwnerId = uint(ownerId)
+	community.Name = name
+	code, msg := models.CreateCommunity(community)
+	if code == 0 {
+		utils.RespOk(c.Writer, code, msg)
+	} else {
+		utils.RespFail(c.Writer, msg)
+	}
+}

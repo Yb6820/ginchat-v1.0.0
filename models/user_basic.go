@@ -57,6 +57,12 @@ func FindUserByNameAndPwd(name string, password string) UserBasic {
 	return user
 }
 
+func FindUserByID(id uint) UserBasic {
+	user := UserBasic{}
+	utils.DB.Where("id = ?", id).First(&user)
+	return user
+}
+
 // 名字唯一确定一个人
 func FindUserByName(name string) UserBasic {
 	user := UserBasic{}
