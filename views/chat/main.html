@@ -1,5 +1,5 @@
 {{define "/chat/main.shtml"}}
-<div v-show="win!='main'">
+<div v-show="win=='single'||win=='group'">
     <header class="mui-bar mui-bar-nav">
         <a class="mui-icon mui-icon-left-nav mui-pull-left" @tap="win='main'"></a>
         <h1 class="mui-title" v-text="title"></h1>
@@ -7,26 +7,22 @@
     <div id="convo" data-from="Sonu Joshi">
 
         <ul class="chat-thread">
-            <!--群聊且item.dstid=当前msgcontext.dstid
-        <span v-text="JSON.stringify(msglist)"></span>
-          -->
-            <!--单聊且是他发的item.userid=msgcontext.dstid && 发给我的 item.dstid=myid 或者是我item.userid= myid发的,&&发给他的item.dstid= msgcontext.dstid 我发给他的  -->
-
-            <!--dstid>TargetId  11=2  10=1 -->
-            <!-- v-if="(item.ismine? item.msg.TargetId==msgcontext.TargetId : item.msg.userId==msgcontext.TargetId )" -->
-            <li class="chat " :class="item.ismine?'mine':'other'" v-for="item in msglist" v-if="(item.ismine? item.msg.TargetId==msgcontext.TargetId : item.msg.userId==msgcontext.TargetId )">
+            <!--群聊(Type==2):所有发往该群的消息,消息TargetId即群ID,不区分发送者 -->
+            <!--单聊(Type==1):我发的且发给对方(item.msg.TargetId==当前聊天对象) 或 对方发给我的(item.msg.userId==当前聊天对象) -->
+            <li class="chat" :class="item.ismine?'mine':'other'" v-for="item in msglist" v-if="(msgcontext.Type==2 ? item.msg.TargetId==msgcontext.TargetId : (item.ismine ? item.msg.TargetId==msgcontext.TargetId : item.msg.userId==msgcontext.TargetId))">
 
                 <div>
-                    <img class=" avatar " :src="item.user.avatar || '/asset/images/avatar0.png' " />
+                    <img class="avatar" :src="item.user.avatar || '/asset/images/avatar0.png'" />
                 </div>
 
                 <span></span>
-                <div class="content ">
-                    <div v-if="item.msg.Media==1 " v-text="item.msg.Content "></div>
-                    <img class="pic " v-if="item.msg.Media==4 " :src="item.msg.url " />
-                    <div v-if="item.msg.Media==3 " @tap="playaudio(item.msg.url) ">
-                        <img class="audio " src="/asset/images/audiom.png " />
-                        <span v-text="item.msg.amount "></span>
+                <div class="content">
+                    <div class="sender" v-if="msgcontext.Type==2 && !item.ismine" v-text="item.user.Name"></div>
+                    <div v-if="item.msg.Media==1" v-text="item.msg.Content"></div>
+                    <img class="pic" v-if="item.msg.Media==4" :src="item.msg.url" />
+                    <div v-if="item.msg.Media==3" @tap="playaudio(item.msg.url)">
+                        <img class="audio" src="/asset/images/audiom.png" />
+                        <span v-text="item.msg.amount"></span>
                     </div>
                 </div>
             </li>

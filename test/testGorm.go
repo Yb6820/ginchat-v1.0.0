@@ -15,15 +15,15 @@ func main() {
 
 	// Migrate the schema
 	//创建表，没有则新创
-	//db.AutoMigrate(&models.UserBasic{})
+	db.AutoMigrate(&models.UserBasic{})
 
 	//生成message表
-	//db.AutoMigrate(&models.Message{})
+	db.AutoMigrate(&models.Message{})
 
-	//生成contact表
-	//db.AutoMigrate(&models.Contact{})
+	//生成contact表(好友关系type=1/群关系type=2)
+	db.AutoMigrate(&models.Contact{})
 
-	//生成group_basic表
+	//生成community表
 	db.AutoMigrate(&models.Community{})
 
 	/* // Create

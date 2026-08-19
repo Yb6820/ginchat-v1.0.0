@@ -33,6 +33,7 @@ func Router() *gin.Engine {
 	r.GET("/user/deleteUser", service.DeleteUser)
 	r.POST("/user/updateUser", service.UpdateUser)
 	r.POST("/user/findUserByNameAndPwd", service.FindUserByNameAndPwd)
+	r.POST("/user/find", service.FindUser)
 
 	//发送消息
 	r.GET("/user/sendMsg", service.SendMsg)
@@ -46,5 +47,7 @@ func Router() *gin.Engine {
 	r.POST("/contact/createCommunity", service.CreateCommunity)
 	//群列表
 	r.POST("/contact/loadcommunity", service.LoadCommunity)
+	//加群
+	r.POST("/contact/joincommunity", service.JoinCommunity)
 	return r
 }

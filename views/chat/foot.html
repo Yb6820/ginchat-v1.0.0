@@ -27,10 +27,9 @@
             win: "main",
             com: {
                 "ownerId": "",
-                "icon": "",
-                "cate": "",
+                "icon": "/asset/images/community.png",
                 "name": "",
-                "memo": ""
+                "desc": ""
             },
             txtmsg: "",
             panelstat: "kbord",
@@ -245,7 +244,7 @@
                 }
                 data.ismine = userId() == msg.userId;
                 //console.log(data.ismine,userId(),msg.userid)
-                data.user = user;
+                data.user = user || {};
                 data.msg = msg;
                 this.msglist = this.msglist.concat(data)
                 this.reset();
@@ -278,7 +277,7 @@
             sendaudiomsg: function(url, num) {
                 //{id:1,userid:2,dstid:3,cmd:10,media:3,url:"http://www.a,com/dsturl.mp3",anount:40}
                 var msg = this.createmsgcontext();
-                msg.media = 3;
+                msg.Media = 3;
                 msg.url = url;
                 msg.amount = num;
                 this.showmsg(userInfo(), msg)
@@ -293,11 +292,11 @@
                 this.msgcontext.Type = 1;
             },
             groupmsg: function(group) {
-
+                //console.log(group)
                 this.win = "group";
-                this.title = group.name;
-                this.msgcontext.TargetId = parseInt(group.id);
-                this.msgcontext.Type = 11;
+                this.title = group.Name;
+                this.msgcontext.TargetId = parseInt(group.ID);
+                this.msgcontext.Type = 2;
             },
             loaduserinfo: function(userId, cb) {
                 userId = "" + userId;
@@ -409,16 +408,25 @@
 
             //新建群提交
             createcommunity() {
-                //console.log("createcommunity")
+                if (!this.com.name) {
+                    mui.toast("请填写群名称")
+                    return
+                }
                 this.com.ownerId = userId()
-                console.log(this.com)
-                util.post("/contact/createCommunity", this.com).then(res => {
-                    console.log(res)
+                var that = this
+                post("/contact/createCommunity", this.com, function(res) {
                     if (res.Code != 0) {
                         mui.toast(res.Msg)
                     } else {
-                        mui.toast("建群成功,即将跳转")
-                        goBack()
+                        mui.toast("建群成功")
+                        that.com = {
+                            "ownerId": "",
+                            "icon": "/asset/images/community.png",
+                            "name": "",
+                            "desc": ""
+                        }
+                        that.loadcommunitys()
+                        that.goBack()
                     }
                 })
             },
@@ -432,15 +440,15 @@
             _joincomunity: function(dstobj) {
                 var that = this;
                 post("contact/joincommunity", {
-                    dstid: dstobj,
+                    comId: dstobj,
                     "userId": userId()
                 }, function(res) {
-                    if (res.code == 0) {
-                        mui.toast("添加成功");
+                    if (res.Code == 0) {
+                        mui.toast("加群成功");
 
                         that.loadcommunitys();
                     } else {
-                        mui.toast(res.msg);
+                        mui.toast(res.Msg);
                     }
                 })
             },
@@ -463,7 +471,7 @@
             quit: function() {
                 sessionStorage.removeItem("userid")
                 sessionStorage.removeItem("userinfo")
-                location.href = "login.shtml"
+                location.href = "/"
             }
 
 

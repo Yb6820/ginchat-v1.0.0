@@ -69,6 +69,30 @@ func FindUserByNameAndPwd(c *gin.Context) {
 	})
 }
 
+// FindUser
+// @Summary 根据ID查询用户
+// @Tags 用户模块
+// @param id formData string false "用户ID"
+// @Success 200 {string} json{"code","message"}
+// @Router /user/find [post]
+func FindUser(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Request.FormValue("id"))
+	data := models.FindUserByID(uint(id))
+	if data.ID == 0 {
+		c.JSON(200, gin.H{
+			"code":    -1, //0成功     -1失败
+			"message": "该用户不存在！",
+			"data":    data,
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"code":    0, //0成功     -1失败
+		"message": "查询成功！",
+		"data":    data,
+	})
+}
+
 // CreateUser
 // @Summary 新增用户
 // @Tags 用户模块
@@ -254,7 +278,27 @@ func CreateCommunity(c *gin.Context) {
 	community := models.Community{}
 	community.OwnerId = uint(ownerId)
 	community.Name = name
+	community.Img = c.Request.FormValue("icon")
+	community.Desc = c.Request.FormValue("desc")
 	code, msg := models.CreateCommunity(community)
+	if code == 0 {
+		utils.RespOk(c.Writer, code, msg)
+	} else {
+		utils.RespFail(c.Writer, msg)
+	}
+}
+
+// JoinCommunity
+// @Summary 加入群聊
+// @Tags 群组模块
+// @param userId formData string false "用户ID"
+// @param comId formData string false "群ID"
+// @Success 200 {string} json{"code","message"}
+// @Router /contact/joincommunity [post]
+func JoinCommunity(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.Request.FormValue("userId"))
+	comId, _ := strconv.Atoi(c.Request.FormValue("comId"))
+	code, msg := models.JoinCommunity(uint(userId), uint(comId))
 	if code == 0 {
 		utils.RespOk(c.Writer, code, msg)
 	} else {
@@ -266,7 +310,7 @@ func LoadCommunity(c *gin.Context) {
 	ownerId, _ := strconv.Atoi(c.Request.FormValue("ownerId"))
 	data, msg := models.LoadCommunity(uint(ownerId))
 	if len(data) != 0 {
-		utils.RespList(c.Writer, 0, data, msg)
+		utils.RespList(c.Writer, 0, data, len(data))
 	} else {
 		utils.RespFail(c.Writer, msg)
 	}

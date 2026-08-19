@@ -18,13 +18,14 @@ type Message struct {
 	gorm.Model
 	FromId   uint   //发送者
 	TargetId uint   //接收者
-	Type     int    //发送类型  群聊 私聊 广播
+	Type     int    //发送类型  1私聊 2群聊 3广播
 	Media    int    //消息类型  文字，图片 ，音频
 	Context  string //消息内容
 	Pic      string
 	Url      string
 	Desc     string
-	Amount   int //其他数字统计
+	Amount   int  //其他数字统计
+	UserId   uint `json:"userId" gorm:"-"` //前端透传的发送者ID,用于群聊分发,不持久化
 }
 
 func (table *Message) TableName() string {
@@ -69,7 +70,11 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 		DataQueue: make(chan []byte, 50),
 		GroupSets: set.New(set.ThreadSafe),
 	}
-	//3、用户关系
+	//3、用户关系(加载用户加入的群,用于群聊消息分发)
+	comIds := SearchCommunityIds(uint(userId))
+	for _, v := range comIds {
+		node.GroupSets.Add(v)
+	}
 
 	//4、userid和node绑定 并加锁
 	rwLocker.Lock()
@@ -179,9 +184,10 @@ func dispatch(data []byte) {
 	case 1: //发送私信
 		fmt.Println("dispatch data:", string(data))
 		sendMsg(msg.TargetId, data)
-		/* case 2:
-			sendGroupMsg()
-		case 3:
+	case 2: //发送群聊
+		fmt.Println("dispatch group data:", string(data))
+		sendGroupMsg(msg.UserId, msg.TargetId, data)
+		/* case 3:
 			sendAllMsg()
 		case 4: */
 
@@ -194,6 +200,28 @@ func sendMsg(userId uint, msg []byte) {
 	node, ok := clientMap[int64(userId)]
 	rwLocker.RUnlock()
 	if ok {
+		node.DataQueue <- msg
+	}
+}
+
+// sendGroupMsg 群聊消息分发给群内除发送者以外的所有在线成员
+func sendGroupMsg(fromId uint, groupId uint, msg []byte) {
+	fmt.Println("sendGroupMsg >>> groupID", groupId, "  msg:", string(msg))
+	//先筛选出群内在线成员的节点,避免持锁投递
+	nodes := make([]*Node, 0)
+	rwLocker.RLock()
+	for userId, node := range clientMap {
+		//自己发的消息前端已本地渲染,无需回发
+		if userId == int64(fromId) {
+			continue
+		}
+		//仅发给加入了该群的成员
+		if node.GroupSets.Has(groupId) {
+			nodes = append(nodes, node)
+		}
+	}
+	rwLocker.RUnlock()
+	for _, node := range nodes {
 		node.DataQueue <- msg
 	}
 }
