@@ -414,7 +414,7 @@
                 }
                 this.com.ownerId = userId()
                 var that = this
-                post("/contact/createCommunity", this.com, function(res) {
+                post("contact/createCommunity", this.com, function(res) {
                     if (res.Code != 0) {
                         mui.toast(res.Msg)
                     } else {
