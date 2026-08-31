@@ -315,3 +315,15 @@ func LoadCommunity(c *gin.Context) {
 		utils.RespFail(c.Writer, msg)
 	}
 }
+
+// LoadGroupMessages
+// @Summary 查询群聊历史消息
+// @Tags 群组模块
+// @param groupId formData string false "群ID"
+// @Success 200 {string} json{"code","message"}
+// @Router /contact/loadGroupMessages [post]
+func LoadGroupMessages(c *gin.Context) {
+	groupId, _ := strconv.Atoi(c.Request.FormValue("groupId"))
+	data := models.LoadGroupMessages(uint(groupId), 30)
+	utils.RespOKList(c.Writer, data, len(data))
+}

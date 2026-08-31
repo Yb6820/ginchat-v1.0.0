@@ -24,6 +24,7 @@
                 memo: "",
             },
             webSocket: {},
+            loadedGroups: {},
             win: "main",
             com: {
                 "ownerId": "",
@@ -297,6 +298,25 @@
                 this.title = group.Name;
                 this.msgcontext.TargetId = parseInt(group.ID);
                 this.msgcontext.Type = 2;
+                //首次进入该群时拉取历史消息
+                if (!this.loadedGroups[group.ID]) {
+                    this.loadedGroups[group.ID] = true;
+                    this.loadGroupHistory(group.ID);
+                }
+            },
+            loadGroupHistory: function(groupId) {
+                var that = this;
+                post("contact/loadGroupMessages", {
+                    groupId: groupId
+                }, function(res) {
+                    var rows = res.Rows || [];
+                    for (var i in rows) {
+                        var m = rows[i];
+                        that.loaduserinfo(m.userId, function(user) {
+                            that.showmsg(user, m);
+                        }.bind(that));
+                    }
+                });
             },
             loaduserinfo: function(userId, cb) {
                 userId = "" + userId;

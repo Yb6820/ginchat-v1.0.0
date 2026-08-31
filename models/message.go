@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/websocket"
 	"gopkg.in/fatih/set.v0"
 	"gorm.io/gorm"
+
+	"ginchat/utils"
 )
 
 // 消息
@@ -20,7 +22,7 @@ type Message struct {
 	TargetId uint   //接收者
 	Type     int    //发送类型  1私聊 2群聊 3广播
 	Media    int    //消息类型  文字，图片 ，音频
-	Context  string //消息内容
+	Context  string `json:"Content"` //消息内容(前端字段名为Content,加tag对齐)
 	Pic      string
 	Url      string
 	Desc     string
@@ -187,6 +189,7 @@ func dispatch(data []byte) {
 	case 2: //发送群聊
 		fmt.Println("dispatch group data:", string(data))
 		sendGroupMsg(msg.UserId, msg.TargetId, data)
+		saveGroupMsg(msg)
 		/* case 3:
 			sendAllMsg()
 		case 4: */
@@ -224,4 +227,36 @@ func sendGroupMsg(fromId uint, groupId uint, msg []byte) {
 	for _, node := range nodes {
 		node.DataQueue <- msg
 	}
+}
+
+// saveGroupMsg 群聊消息落库,用于刷新后加载历史记录
+func saveGroupMsg(msg Message) {
+	m := Message{
+		FromId:   msg.UserId, //前端透传的发送者ID
+		TargetId: msg.TargetId,
+		Type:     msg.Type,
+		Media:    msg.Media,
+		Context:  msg.Context,
+		Url:      msg.Url,
+		Amount:   msg.Amount,
+	}
+	if err := utils.DB.Create(&m).Error; err != nil {
+		fmt.Println("saveGroupMsg err:", err)
+	}
+}
+
+// LoadGroupMessages 查询群聊历史消息(最近limit条,按时间升序)
+func LoadGroupMessages(groupId uint, limit int) []Message {
+	msgs := make([]Message, 0)
+	utils.DB.Where("target_id = ? and type = 2", groupId).
+		Order("id desc").Limit(limit).Find(&msgs)
+	// 反转为时间升序,便于前端按序渲染
+	for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {
+		msgs[i], msgs[j] = msgs[j], msgs[i]
+	}
+	// 补充前端渲染所需的发送者userId字段
+	for i := range msgs {
+		msgs[i].UserId = msgs[i].FromId
+	}
+	return msgs
 }
