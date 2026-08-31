@@ -327,3 +327,17 @@ func LoadGroupMessages(c *gin.Context) {
 	data := models.LoadGroupMessages(uint(groupId), 30)
 	utils.RespOKList(c.Writer, data, len(data))
 }
+
+// LoadPrivateMessages
+// @Summary 查询两人私聊历史消息
+// @Tags 消息模块
+// @param userId formData string false "当前用户ID"
+// @param targetId formData string false "对方ID"
+// @Success 200 {string} json{"code","message"}
+// @Router /contact/loadPrivateMessages [post]
+func LoadPrivateMessages(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.Request.FormValue("userId"))
+	targetId, _ := strconv.Atoi(c.Request.FormValue("targetId"))
+	data := models.LoadPrivateMessages(uint(userId), uint(targetId), 30)
+	utils.RespOKList(c.Writer, data, len(data))
+}

@@ -186,10 +186,11 @@ func dispatch(data []byte) {
 	case 1: //发送私信
 		fmt.Println("dispatch data:", string(data))
 		sendMsg(msg.TargetId, data)
+		saveMsg(msg)
 	case 2: //发送群聊
 		fmt.Println("dispatch group data:", string(data))
 		sendGroupMsg(msg.UserId, msg.TargetId, data)
-		saveGroupMsg(msg)
+		saveMsg(msg)
 		/* case 3:
 			sendAllMsg()
 		case 4: */
@@ -229,8 +230,8 @@ func sendGroupMsg(fromId uint, groupId uint, msg []byte) {
 	}
 }
 
-// saveGroupMsg 群聊消息落库,用于刷新后加载历史记录
-func saveGroupMsg(msg Message) {
+// saveMsg 消息落库,用于刷新后加载历史记录(私聊/群聊通用)
+func saveMsg(msg Message) {
 	m := Message{
 		FromId:   msg.UserId, //前端透传的发送者ID
 		TargetId: msg.TargetId,
@@ -241,7 +242,7 @@ func saveGroupMsg(msg Message) {
 		Amount:   msg.Amount,
 	}
 	if err := utils.DB.Create(&m).Error; err != nil {
-		fmt.Println("saveGroupMsg err:", err)
+		fmt.Println("saveMsg err:", err)
 	}
 }
 
@@ -249,6 +250,23 @@ func saveGroupMsg(msg Message) {
 func LoadGroupMessages(groupId uint, limit int) []Message {
 	msgs := make([]Message, 0)
 	utils.DB.Where("target_id = ? and type = 2", groupId).
+		Order("id desc").Limit(limit).Find(&msgs)
+	// 反转为时间升序,便于前端按序渲染
+	for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {
+		msgs[i], msgs[j] = msgs[j], msgs[i]
+	}
+	// 补充前端渲染所需的发送者userId字段
+	for i := range msgs {
+		msgs[i].UserId = msgs[i].FromId
+	}
+	return msgs
+}
+
+// LoadPrivateMessages 查询两人私聊历史消息(双向合并,最近limit条,按时间升序)
+func LoadPrivateMessages(userId uint, targetId uint, limit int) []Message {
+	msgs := make([]Message, 0)
+	utils.DB.Where("type = 1 and ((from_id = ? and target_id = ?) or (from_id = ? and target_id = ?))",
+		userId, targetId, targetId, userId).
 		Order("id desc").Limit(limit).Find(&msgs)
 	// 反转为时间升序,便于前端按序渲染
 	for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {

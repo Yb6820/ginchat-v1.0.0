@@ -25,6 +25,7 @@
             },
             webSocket: {},
             loadedGroups: {},
+            loadedFriends: {},
             win: "main",
             com: {
                 "ownerId": "",
@@ -291,6 +292,26 @@
                 this.title = "和" + user.Name + "聊天中";
                 this.msgcontext.TargetId = parseInt(user.ID);
                 this.msgcontext.Type = 1;
+                //首次与对方聊天时拉取历史消息
+                if (!this.loadedFriends[user.ID]) {
+                    this.loadedFriends[user.ID] = true;
+                    this.loadPrivateHistory(user.ID);
+                }
+            },
+            loadPrivateHistory: function(targetId) {
+                var that = this;
+                post("contact/loadPrivateMessages", {
+                    userId: userId(),
+                    targetId: targetId
+                }, function(res) {
+                    var rows = res.Rows || [];
+                    for (var i in rows) {
+                        var m = rows[i];
+                        that.loaduserinfo(m.userId, function(user) {
+                            that.showmsg(user, m);
+                        }.bind(that));
+                    }
+                });
             },
             groupmsg: function(group) {
                 //console.log(group)
